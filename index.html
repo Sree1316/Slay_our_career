@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="LevelUp - Multi-Level Gamified Interview Prep Quest with Unique Character Transformations per Level" />
+  <title>LevelUp — Multi-Level Quest</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body { 
+      min-height: 100vh; 
+      background: linear-gradient(rgba(10, 15, 30, 0.9), rgba(8, 12, 24, 0.94)), url('https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=1600&auto=format&fit=crop');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      color: #eef2ff; 
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+    .glass { background: rgba(17, 25, 48, .86); border: 1px solid rgba(148,163,184,.2); backdrop-filter: blur(14px); }
+    .btn-primary { background: linear-gradient(135deg, #a855f7, #6366f1); color: #ffffff; font-weight: 800; transition: all .2s; }
+    .btn-primary:hover { filter: brightness(1.15); transform: translateY(-2px); box-shadow: 0 4px 20px rgba(168,85,247,0.4); }
+    .btn-primary:disabled { opacity: .45; cursor: not-allowed; transform: none; box-shadow: none; }
+    .field { width: 100%; background: #0b1224; border: 1px solid #334155; border-radius: .8rem; padding: .8rem .9rem; color: #f8fafc; outline: none; }
+    .field:focus { border-color: #a855f7; box-shadow: 0 0 0 3px rgba(168,85,247,0.25); }
+    .choice { width: 100%; text-align: left; border: 1px solid #334155; background: rgba(15,23,42,.85); border-radius: 12px; padding: .9rem 1.1rem; transition: all .15s; font-weight: 600; }
+    .choice:hover:not(:disabled) { border-color: #a855f7; background: rgba(168,85,247,.15); transform: translateX(4px); }
+    .choice.correct { border-color: #34d399; background: rgba(16,185,129,.2); color: #6ee7b7; }
+    .choice.wrong { border-color: #fb7185; background: rgba(244,63,94,.2); color: #fca5a5; }
+    .progress-fill { background: linear-gradient(90deg, #a855f7, #3b82f6, #10b981); transition: width .4s cubic-bezier(0.4, 0, 0.2, 1); }
+    .character-avatar { transition: all 0.5s ease; filter: drop-shadow(0 0 15px rgba(168,85,247,0.5)); }
+    .bounce-react { animation: bounceReact 0.6s ease; }
+    @keyframes bounceReact { 0%,100% { transform: scale(1); } 50% { transform: scale(1.25) rotate(-5deg); } }
+    .shake-react { animation: shakeReact 0.5s ease; }
+    @keyframes shakeReact { 0%,100% { transform: translateX(0); } 20%,60% { transform: translateX(-10px); } 40%,80% { transform: translateX(10px); } }
+    .countdown-number { animation: pop .8s ease both; }
+    @keyframes pop { 0% { opacity: 0; transform: scale(.4); } 35% { opacity: 1; transform: scale(1.15); } 75% { transform: scale(1); } 100% { opacity: 0; transform: scale(1.2); } }
+    .hidden-screen { display: none !important; }
+  </style>
+</head>
+<body class="px-3 py-4 sm:px-6">
+  <div id="app" class="mx-auto max-w-6xl">
+    <header class="mb-4">
+      <div class="mb-3 flex items-center justify-between gap-3">
+        <a href="#" class="flex items-center gap-2 font-black tracking-tight text-xl sm:text-2xl">
+          <span class="grid h-10 w-10 place-items-center rounded-xl bg-purple-500 text-slate-950 font-bold text-2xl">⚡</span>
+          <span>Level<span class="text-purple-400">Up</span><span class="ml-2 text-xs font-medium text-slate-400">MULTI-LEVEL QUEST</span></span>
+        </a>
+        <div id="header-status" class="hidden rounded-full border border-slate-700 px-3 py-1 text-xs text-slate-300 sm:block">Level 1: Inji Iduppazhagi Quest</div>
+      </div>
+    </header>
+
+    <main>
+      <!-- LEAD SCREEN -->
+      <section id="lead-screen" class="grid gap-5 lg:grid-cols-[1.05fr_.95fr]">
+        <div class="glass rounded-3xl p-6 sm:p-9 flex flex-col justify-between">
+          <div>
+            <p class="mb-3 text-xs font-bold uppercase tracking-[.25em] text-purple-400">Multi-Stage Hero Transformation</p>
+            <h1 class="max-w-xl text-3xl font-black leading-tight sm:text-5xl">Conquer 4 Levels, Evolve 4 Different <span class="text-purple-400">Mass Characters!</span> 🔥</h1>
+            <p class="mt-4 max-w-xl leading-7 text-slate-300">Level 1: Laddoo to Six-Pack Hero 🍬 | Level 2: Giant Dragon 🐉 | Level 3: Sports Car Racer 🏎️ | Level 4: Gun Shooter Agent 🔫</p>
+          </div>
+          
+          <div class="mt-8 grid grid-cols-4 gap-2 text-center">
+            <div class="rounded-xl bg-slate-900/80 p-2 border border-purple-500/20"><div class="text-2xl">🍬</div><p class="mt-1 text-[10px] font-bold text-purple-300">Lvl 1 (10 Qs)</p></div>
+            <div class="rounded-xl bg-slate-900/80 p-2 border border-purple-500/20"><div class="text-2xl">🐉</div><p class="mt-1 text-[10px] font-bold text-purple-300">Lvl 2 (20 Qs)</p></div>
+            <div class="rounded-xl bg-slate-900/80 p-2 border border-purple-500/20"><div class="text-2xl">🏎️</div><p class="mt-1 text-[10px] font-bold text-purple-300">Lvl 3 (30 Qs)</p></div>
+            <div class="rounded-xl bg-slate-900/80 p-2 border border-purple-500/20"><div class="text-2xl">🔫</div><p class="mt-1 text-[10px] font-bold text-purple-300">Lvl 4 (50 Qs)</p></div>
+          </div>
+        </div>
+
+        <div class="glass rounded-3xl p-6 sm:p-8">
+          <h2 class="text-2xl font-extrabold text-white">Create Player Profile</h2>
+          <form id="lead-form" class="mt-5 space-y-4">
+            <div><label class="mb-1 block text-xs font-semibold uppercase text-slate-300">Full Name</label><input class="field" id="fullName" name="fullName" required placeholder="e.g. Pavithra Sree" /></div>
+            <div><label class="mb-1 block text-xs font-semibold uppercase text-slate-300">Email Address</label><input class="field" id="email" name="email" type="email" required placeholder="you@example.com" /></div>
+            <div><label class="mb-1 block text-xs font-semibold uppercase text-slate-300">Mobile Number</label><input class="field" id="mobile" name="mobile" type="tel" required placeholder="+91 98765 43210" /></div>
+            <div>
+              <label class="mb-1 block text-xs font-semibold uppercase text-slate-300">Major / Degree</label>
+              <select class="field" id="major" required>
+                <option value="commerce">B.Com / M.Com</option>
+                <option value="engineering">B.E / B.Tech</option>
+                <option value="business">BBA / MBA</option>
+                <option value="arts">Arts / Science / Other</option>
+              </select>
+            </div>
+            <button class="btn-primary w-full rounded-xl px-5 py-3.5 mt-2" type="submit">Start Level 1 Quest →</button>
+          </form>
+        </div>
+      </section>
+
+      <!-- COUNTDOWN SCREEN -->
+      <section id="countdown-screen" class="hidden-screen glass mx-auto max-w-2xl rounded-3xl px-6 py-16 text-center">
+        <p id="countdown-title" class="text-sm font-bold uppercase tracking-[.3em] text-purple-400">Get Ready for Level 1!</p>
+        <h2 class="mt-3 text-3xl font-black">Quest Starting In…</h2>
+        <div id="countdown-number" class="countdown-number mt-5 text-8xl font-black text-purple-400">3</div>
+      </section>
+
+      <!-- GAME SCREEN -->
+      <section id="game-screen" class="hidden-screen">
+        <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p id="current-level-tag" class="text-xs font-bold uppercase tracking-[.22em] text-purple-400">Level 1: Laddoo Mass Quest</p>
+            <h2 id="welcome-title" class="text-2xl font-black sm:text-3xl">Let's go, Player!</h2>
+          </div>
+          <button id="quit-btn" class="rounded-xl border border-slate-700 px-4 py-2 text-xs font-bold text-slate-300 hover:bg-slate-800">Exit Quest</button>
+        </div>
+
+        <div class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <div class="space-y-5">
+            <div class="glass rounded-2xl p-4 sm:p-5">
+              <div class="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p id="level-label" class="text-lg font-extrabold text-white">Level 1</p>
+                  <p id="level-description" class="text-xs text-slate-400">Score 70%+ to unlock Level 2!</p>
+                </div>
+                <div class="flex gap-2 text-center">
+                  <div class="rounded-xl bg-slate-900/90 px-3 py-1.5 border border-slate-700/50"><p class="text-[10px] text-slate-400">XP</p><p id="xp-value" class="font-black text-purple-300">0</p></div>
+                  <div class="rounded-xl bg-slate-900/90 px-3 py-1.5 border border-slate-700/50"><p class="text-[10px] text-slate-400">Streak</p><p id="streak-value" class="font-black text-amber-400">0 🔥</p></div>
+                </div>
+              </div>
+              <div class="mt-4 h-2.5 overflow-hidden rounded-full bg-slate-800"><div id="progress-fill" class="progress-fill h-full w-0"></div></div>
+              <div class="mt-2 flex justify-between text-xs text-slate-400"><span id="question-count">Question 1 of 10</span><span id="progress-percent">0%</span></div>
+            </div>
+
+            <div class="glass rounded-3xl p-5 sm:p-7">
+              <div class="flex items-center justify-between gap-2">
+                <span id="category-chip" class="rounded-full border border-purple-500/30 bg-purple-500/10 px-3 py-1 text-xs font-bold text-purple-300">GENERAL</span>
+                <span class="text-xs font-bold text-emerald-400">+10 XP per correct answer</span>
+              </div>
+              <h3 id="question-text" class="mt-4 text-xl font-bold leading-snug sm:text-2xl text-white">Question text</h3>
+              <div id="choices" class="mt-5 grid gap-3"></div>
+              <div id="feedback" class="mt-4 hidden rounded-xl p-4 text-sm leading-6"></div>
+              
+              <div class="mt-5 flex flex-wrap items-center justify-between gap-3">
+                <p class="text-xs text-slate-400">Answer correctly to evolve your character!</p>
+                <button id="next-btn" class="btn-primary rounded-xl px-6 py-3 text-sm" disabled>Next Question →</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT: DYNAMIC LEVEL CHARACTER CARD -->
+          <aside class="space-y-5">
+            <div class="glass overflow-hidden rounded-3xl p-5 text-center relative border-2 border-purple-500/30">
+              <span id="transformation-stage-badge" class="absolute top-3 right-3 rounded-full bg-purple-500/20 border border-purple-500/40 px-3 py-1 text-[10px] font-bold text-purple-300">STAGE 1</span>
+              
+              <p class="text-xs font-bold uppercase tracking-widest text-slate-400 mt-1">Level Character Evolution</p>
+              
+              <div id="avatar-container" class="my-6 py-4 flex flex-col items-center justify-center min-h-[180px]">
+                <div id="avatar-emoji" class="character-avatar text-8xl">🚴‍♂️</div>
+                <div id="avatar-sub-visual" class="text-3xl mt-2">🚲 💨</div>
+              </div>
+
+              <div class="rounded-2xl bg-slate-900/90 p-3.5 border border-slate-700/80 text-left">
+                <p class="text-[10px] font-bold uppercase text-purple-400 mb-1">Character Reaction:</p>
+                <p id="hero-dialogue" class="text-xs font-medium leading-relaxed text-slate-200">"Pasiyoda thallikitruken bro! Oru correct answer kuduthu support pannunga!"</p>
+              </div>
+
+              <div class="mt-4 text-left">
+                <div class="flex justify-between text-xs mb-1"><span class="text-slate-400 font-bold">Level Progress Meter</span><span id="meter-count-text" class="text-purple-300 font-extrabold">0 / 10</span></div>
+                <div class="h-2 overflow-hidden rounded-full bg-slate-800"><div id="level-meter" class="h-full bg-amber-400 transition-all duration-300" style="width:0%"></div></div>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <!-- RESULT SCREEN -->
+      <section id="result-screen" class="hidden-screen">
+        <div class="glass mx-auto max-w-3xl rounded-3xl p-6 text-center sm:p-10 border-2 border-purple-500/40">
+          <div id="result-emoji" class="text-7xl mb-2">💥</div>
+          <p class="text-xs font-bold uppercase tracking-[.3em] text-purple-400">Quest Report</p>
+          <h2 id="result-title" class="mt-2 text-3xl font-black sm:text-4xl text-white">Level Complete!</h2>
+          
+          <div class="my-6 rounded-2xl bg-gradient-to-r from-purple-900/50 to-indigo-900/50 border border-purple-500/40 p-5 text-center">
+            <p id="final-dialogue-text" class="text-base sm:text-lg font-extrabold text-purple-200 leading-relaxed"></p>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 sm:grid-cols-4 mb-6">
+            <div class="rounded-2xl bg-slate-900 p-4 border border-slate-800"><p class="text-xs text-slate-400">Score</p><p id="result-score" class="mt-1 text-2xl font-black text-white">0%</p></div>
+            <div class="rounded-2xl bg-slate-900 p-4 border border-slate-800"><p class="text-xs text-slate-400">Correct</p><p id="result-correct" class="mt-1 text-2xl font-black text-emerald-400">0</p></div>
+            <div class="rounded-2xl bg-slate-900 p-4 border border-slate-800"><p class="text-xs text-slate-400">XP Earned</p><p id="result-xp" class="mt-1 text-2xl font-black text-purple-300">0</p></div>
+            <div class="rounded-2xl bg-slate-900 p-4 border border-slate-800"><p class="text-xs text-slate-400">Status</p><p id="result-status" class="mt-1 text-sm font-black text-amber-400">LOCKED</p></div>
+          </div>
+
+          <div class="flex flex-col justify-center gap-3 sm:flex-row">
+            <button id="continue-btn" class="btn-primary rounded-xl px-6 py-3.5 text-sm">Next Level →</button>
+            <button id="restart-btn" class="rounded-xl border border-slate-700 px-6 py-3.5 text-sm font-bold hover:bg-slate-800 text-white">Replay Level ↻</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="mt-8 text-center text-xs text-slate-500">
+      © <span id="year"></span> LevelUp Multi-Level Quest Edition
+    </footer>
+  </div>
+
+  <script>
+    'use strict';
+
+    const QUESTION_BANKS = {
+      commerce: [
+        {cat:'Accounts',q:'Which equation is basic accounting equation?',a:['Assets = Liabilities + Equity','Assets = Revenue − Expenses','Profit = Assets + Cash','Liabilities = Sales + Equity'],correct:0,why:'Assets equal liabilities plus owners equity.'},
+        {cat:'Accounts',q:'A debit entry generally increases which account?',a:['Revenue','Liability','Asset','Capital only'],correct:2,why:'Debits generally increase asset and expense accounts.'},
+        {cat:'Accounts',q:'Which statement reports assets and liabilities at a point in time?',a:['Income statement','Balance sheet','Cash budget only','Sales report'],correct:1,why:'Balance sheet presents financial position.'},
+        {cat:'Finance',q:'What does ROI stand for?',a:['Rate of Inventory','Return on Investment','Revenue of Interest','Risk of Inflation'],correct:1,why:'ROI measures return relative to investment cost.'},
+        {cat:'Finance',q:'What is a budget?',a:['A financial plan','A bank account','A tax receipt','A share certificate'],correct:0,why:'A budget estimates income and expenditure.'},
+        {cat:'Finance',q:'Diversification primarily helps reduce what?',a:['All risk to zero','Concentration risk','Inflation to zero','Tax obligations'],correct:1,why:'Diversification spreads exposure.'},
+        {cat:'Economics',q:'What happens to demand when price rises, all else equal?',a:['Quantity demanded falls','Demand doubles','Supply disappears','Nothing changes'],correct:0,why:'Law of demand states quantity demanded falls as price rises.'},
+        {cat:'HR',q:'What is onboarding?',a:['Welcoming and orienting new hires','Annual audit','Leaving company','Product pricing'],correct:0,why:'Onboarding helps new employees settle in.'},
+        {cat:'HR',q:'What is employee attrition?',a:['Employees leaving organization','New product launches','Salary bonus','Training room'],correct:0,why:'Attrition refers to employees leaving.'},
+        {cat:'Business',q:'What does KPI stand for?',a:['Key Performance Indicator','Known Profit Input','Key Product Invoice','Knowledge Index'],correct:0,why:'KPIs track progress against objectives.'},
+        {cat:'Accounts',q:'Revenue minus expenses is called?',a:['Net income','Inventory','Payables','Capital'],correct:0,why:'Revenue minus expenses gives net income.'},
+        {cat:'Finance',q:'What is liquidity?',a:['Ability to meet short-term obligations','Company logo','Brand awareness','Hiring policy'],correct:0,why:'Liquidity describes ability to pay near-term debts.'},
+        {cat:'Economics',q:'GDP measures value of final goods produced where?',a:['Within a country during a period','Only in one company','Only by government','Only exports'],correct:0,why:'GDP measures domestic production.'},
+        {cat:'Business',q:'What is a business partnership?',a:['Two or more people share ownership','Single owner business','Government corporation','Non-profit trust'],correct:0,why:'Partnership involves shared ownership.'},
+        {cat:'Accounts',q:'What are trial balances used for?',a:['Check ledger accounts equality','Calculate net sales','Pay employee salaries','File taxes'],correct:0,why:'Trial balance checks debit and credit equality.'},
+        {cat:'Finance',q:'What is fixed cost?',a:['Cost that does not change with output level','Cost varying with units sold','Random expense','Tax payment'],correct:0,why:'Fixed costs remain constant regardless of production.'},
+        {cat:'Economics',q:'What causes inflation?',a:['General price level sustained rise','Decreasing prices always','Too many employees','Zero interest rates'],correct:0,why:'Inflation is broad rise in prices.'},
+        {cat:'HR',q:'What is a resume?',a:['Summary of education and work experience','Tax receipt','Company balance sheet','Bank statement'],correct:0,why:'Resume details candidate qualifications.'},
+        {cat:'Business',q:'What is market share?',a:['Company portion of total industry sales','Total company profit','Number of employees','Stock price'],correct:0,why:'Market share represents sales percentage.'},
+        {cat:'Accounts',q:'What is depreciation?',a:['Reduction in asset value over time','Increasing cash balance','Employee bonus','Tax refund'],correct:0,why:'Depreciation measures asset wear and tear.'},
+        {cat:'Finance',q:'What is venture capital?',a:['Financing for startups with high growth potential','Personal savings','Bank housing loan','Government tax'],correct:0,why:'Venture capital funds startups.'},
+        {cat:'Economics',q:'What is opportunity cost?',a:['Value of next best alternative forgone','Direct cash spent','Total revenue','Manufacturing cost'],correct:0,why:'Opportunity cost is forgone alternative value.'},
+        {cat:'Management',q:'What is delegation?',a:['Assigning authority and tasks to subordinates','Doing all work alone','Firing staff','Increasing prices'],correct:0,why:'Delegation passes responsibility down.'},
+        {cat:'Business',q:'What is a brand?',a:['Identifying symbol, name or design of product','Company building','Factory machine','Employee uniform'],correct:0,why:'Brand identifies producer identity.'},
+        {cat:'Accounts',q:'What are accounts receivable?',a:['Money owed to company by customers','Money owed to suppliers','Cash in bank','Owner capital'],correct:0,why:'Receivables are customer dues.'},
+        {cat:'Finance',q:'What is compound interest?',a:['Interest calculated on principal and accumulated interest','Simple yearly interest','Zero interest','Government subsidy'],correct:0,why:'Compound interest earns interest on interest.'},
+        {cat:'Economics',q:'What is a tariff?',a:['Tax on imported goods','Domestic sales tax','Income tax','Property tax'],correct:0,why:'Tariffs are import taxes.'},
+        {cat:'HR',q:'What is workplace diversity?',a:['Inclusion of employees from diverse backgrounds','Having one department','Hiring only locals','Zero interviews'],correct:0,why:'Diversity embraces varied backgrounds.'},
+        {cat:'Business',q:'What is a startup?',a:['Newly formed company designed for rapid growth','Old retail shop','Government agency','Law firm'],correct:0,why:'Startups are growth-focused new ventures.'},
+        {cat:'Accounts',q:'What is auditing?',a:['Official inspection of financial accounts','Sales promotion','Product manufacturing','Customer service'],correct:0,why:'Auditing verifies financial records.'}
+      ],
+      engineering: [
+        {cat:'C Prog',q:'Which symbol ends most C statements?',a:[';','.',':',','],correct:0,why:'Semicolon terminates statements.'},
+        {cat:'Java',q:'Which keyword creates a subclass in Java?',a:['inherits','extends','implements','superclass'],correct:1,why:'Subclass uses extends.'},
+        {cat:'Python',q:'Which Python keyword defines a function?',a:['func','function','def','make'],correct:2,why:'Functions start with def.'},
+        {cat:'HTML',q:'What does HTML define?',a:['Webpage structure','Database queries','Server hardware','Image editing'],correct:0,why:'HTML defines structure.'},
+        {cat:'JavaScript',q:'Which keyword declares reassignable block variable?',a:['const','let','static','define'],correct:1,why:'let creates block variable.'},
+        {cat:'Web',q:'Main purpose of CSS?',a:['Style web pages','Store passwords','Compile Java','Send email'],correct:0,why:'CSS styles layout.'},
+        {cat:'Data',q:'SQL keyword to fetch data?',a:['GET','SELECT','FETCH','EXTRACT'],correct:1,why:'SELECT extracts data.'},
+        {cat:'Logic',q:'Binary representation of decimal 5?',a:['101','100','110','011'],correct:0,why:'101 is 5 in binary.'},
+        {cat:'OS',q:'Main function of OS?',a:['Manage hardware & software','Edit photos','Compile code','Browse web'],correct:0,why:'OS manages system resources.'},
+        {cat:'Network',q:'What does HTTP stand for?',a:['HyperText Transfer Protocol','High Tech Transport','Transmission Path','Home Protocol'],correct:0,why:'HTTP governs web transfer.'}
+      ],
+      business: [
+        {cat:'Marketing',q:'Which is NOT one of 4 Ps?',a:['Product','Price','Place','People'],correct:3,why:'Traditional 4 Ps are Product, Price, Place, Promotion.'},
+        {cat:'Management',q:'SWOT analysis stands for?',a:['Strengths, Weaknesses, Opportunities, Threats','Sales, Work, Operations','Strategy, Wealth','System, Workflow'],correct:0,why:'SWOT evaluates business factors.'},
+        {cat:'HR',q:'What is performance appraisal?',a:['Evaluating employee job performance','Calculating tax','Hiring','Pricing'],correct:0,why:'Appraisal evaluates productivity.'},
+        {cat:'Finance',q:'What is gross profit?',a:['Revenue minus COGS','Net income minus tax','Total sales','Assets minus liabilities'],correct:0,why:'Gross profit = Revenue - COGS.'},
+        {cat:'Strategy',q:'B2B stands for?',a:['Business to Business','Buyer to Business','Bank to Business','Brand to Buyer'],correct:0,why:'B2B is commercial transactions.'},
+        {cat:'Operations',q:'What is Just-In-Time (JIT)?',a:['Inventory strategy to reduce holding costs','Late delivery','Excess stock','Manual accounting'],correct:0,why:'JIT receives goods as needed.'},
+        {cat:'Ethics',q:'CSR stands for?',a:['Corporate Social Responsibility','Company Sales Report','Customer Service','Central Regulation'],correct:0,why:'CSR covers social practices.'},
+        {cat:'Leadership',q:'Autocratic leadership means?',a:['Leader makes decisions unilaterally','Everyone votes','No leader','Employees decide'],correct:0,why:'Autocratic maintains full control.'},
+        {cat:'Economics',q:'Monopoly means?',a:['Single seller dominates','Many sellers','No buyers','Government owns'],correct:0,why:'Monopoly has one seller.'},
+        {cat:'Finance',q:'Working capital formula?',a:['Current Assets − Current Liabilities','Revenue − Expenses','Cash + Loans','Equity'],correct:0,why:'Working capital measures liquidity.'}
+      ],
+      arts: [
+        {cat:'Psychology',q:'What is active listening?',a:['Paraphrasing & paying full attention','Interrupting','Looking away','Changing topic'],correct:0,why:'Active listening involves understanding.'},
+        {cat:'Media',q:'Primary purpose of news headline?',a:['Summarize & capture attention','Provide references','Hide story','Replace article'],correct:0,why:'Headlines signal story relevance.'},
+        {cat:'Communication',q:'Non-verbal communication example?',a:['Body posture & gestures','Written letter','Email subject','Voice text'],correct:0,why:'Gestures convey meaning.'},
+        {cat:'Critical',q:'Correlation between events proves?',a:['Association, not necessarily causation','Direct cause','No connection','Data error'],correct:0,why:'Correlation does not prove cause.'},
+        {cat:'Ethics',q:'Plagiarism means?',a:['Using someone else work without credit','Reading books','Translating','Writing original ideas'],correct:0,why:'Plagiarism uses uncredited work.'},
+        {cat:'Research',q:'What is a hypothesis?',a:['A testable proposed explanation','A scientific law','Random opinion','Summary'],correct:0,why:'Hypothesis can be tested.'},
+        {cat:'Sociology',q:'What is culture?',a:['Shared beliefs & values of group','Individual habits','Government laws','Hierarchy'],correct:0,why:'Culture is collective practices.'},
+        {cat:'Logic',q:'Valid deductive reasoning guarantees?',a:['True conclusion if premises are true','Random output','False premise','Opinion'],correct:0,why:'Valid deduction guarantees truth.'},
+        {cat:'Media',q:'Fact-checking aims to?',a:['Verify claims against evidence','Promote rumors','Hide sources','Create fiction'],correct:0,why:'Fact-checking confirms truth.'},
+        {cat:'Psychology',q:'What is empathy?',a:['Understanding another emotional perspective','Ignoring feelings','Feeling superior','Memorizing'],correct:0,why:'Empathy shares feelings.'}
+      ]
+    };
+
+    // LEVEL CONFIGURATIONS
+    const LEVEL_CONFIGS = [
+      {
+        level: 1, name: 'Level 1: Laddoo Mass Quest', count: 10,
+        stages: [
+          {stage: 'SKINNY BOY', emoji: '🚴‍♂️', sub: '🚲 💨', text: '"Pasiyoda thallikitruken bro! Oru correct answer kuduthu Laddoo thaanga!"'},
+          {stage: 'LADDOO EATER', emoji: '👦🍬', sub: '😋', text: '"Yum! Oru laddoo vandhuchu! Body transformation power start aagudhu!"'},
+          {stage: 'BELLY EXPANSION', emoji: '🤰💪', sub: '⚡', text: '"Laddoos உள்ள போகுது! Six-pack energy બહાર வருது!"'},
+          {stage: 'MUSCLE LOADING', emoji: '🏋️‍♂️✨', sub: '🔥', text: '"Packs vaazhiyaa theriya thodangiduchu! Keep answering!"'},
+          {stage: 'MASS HERO', emoji: '🦸‍♂️⚡', sub: '💥🔥', text: '"MASS TRANSFORMATION! Inji Iduppazhagi style-la full Mass Hero-vaa aayitten!"'}
+        ]
+      },
+      {
+        level: 2, name: 'Level 2: Giant Dragon Evolution', count: 20,
+        stages: [
+          {stage: 'HATCHLING', emoji: '🥚🐉', sub: '✨', text: '"Baby dragon hatched! Feed me correct answers to breathe fire!"'},
+          {stage: 'FIRE WHELP', emoji: '🐉🔥', sub: '💨', text: '"Fire level loading! Cosmic flame power growing!"'},
+          {stage: 'GIANT DRAGON', emoji: '🐲⚡', sub: '🌟', text: '"WOAH! Growing giant wings and horns!"'},
+          {stage: 'MYTHICAL BEAST', emoji: '🐉💥', sub: '👑', text: '"FULL EVOLUTION! Ultimate Giant Dragon unleashed!"'}
+        ]
+      },
+      {
+        level: 3, name: 'Level 3: Sports Car Racer', count: 30,
+        stages: [
+          {stage: 'CYCLE SPEED', emoji: '🚲', sub: '💨', text: '"Pedaling fast! Need answers to upgrade to V8 Turbo!"'},
+          {stage: 'SPORTS CAR', emoji: '🏎️', sub: '🏁', text: '"Vroom Vroom! Upgraded to Racing Supercar!"'},
+          {stage: 'HYPERCAR CHAMP', emoji: '🏎️💨', sub: '⚡✨', text: '"Speeding at 300 km/h! Unstoppable speed god!"'}
+        ]
+      },
+      {
+        level: 4, name: 'Level 4: Final Gun Shooter Boss', count: 50,
+        stages: [
+          {stage: 'RECRUIT', emoji: '🕵️‍♂️', sub: '🔍', text: '"Secret agent on mission! Need correct intelligence!"'},
+          {stage: 'MASS GUNNER', emoji: '🔫⚡', sub: '💥', text: '"Target locked! Elite tactical mode activated!"'},
+          {stage: 'APEX AGENT', emoji: '🕵️‍♂️💥', sub: '🏆', text: '"MISSION ACCOMPLISHED! Supreme Apex Hero Agent!"'}
+        ]
+      }
+    ];
+
+    const $ = (id) => document.getElementById(id);
+    const screens = ['lead-screen','countdown-screen','game-screen','result-screen'];
+    let profile = null, currentLevelIndex = 0, questions = [], questionIndex = 0;
+    let xp = 0, correctCount = 0, streak = 0;
+    let answered = false;
+
+    $('year').textContent = new Date().getFullYear();
+
+    function showScreen(id) {
+      screens.forEach(s => $(s).classList.toggle('hidden-screen', s !== id));
+      window.scrollTo({top: 0, behavior: 'smooth'});
+    }
+
+    function shuffle(array) {
+      const result = array.slice();
+      for (let i = result.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [result[i], result[j]] = [result[j], result[i]];
+      }
+      return result;
+    }
+
+    function playSound(type) {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        if (type === 'correct') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(523.25, ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.25);
+          gain.gain.setValueAtTime(0.3, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
+          osc.start(); osc.stop(ctx.currentTime + 0.25);
+        } else if (type === 'wrong') {
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(220, ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(110, ctx.currentTime + 0.3);
+          gain.gain.setValueAtTime(0.3, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+          osc.start(); osc.stop(ctx.currentTime + 0.3);
+        } else if (type === 'burst') {
+          osc.type = 'square';
+          osc.frequency.setValueAtTime(150, ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + 0.6);
+          gain.gain.setValueAtTime(0.5, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.6);
+          osc.start(); osc.stop(ctx.currentTime + 0.6);
+        }
+      } catch (e) { console.log("Audio not supported"); }
+    }
+
+    function updateCharacterAvatar(isCorrectAnswer = null) {
+      const config = LEVEL_CONFIGS[currentLevelIndex];
+      const stages = config.stages;
+      const totalQ = config.count;
+      
+      let stageIndex = Math.min(stages.length - 1, Math.floor((correctCount / totalQ) * stages.length));
+      if (correctCount === totalQ) stageIndex = stages.length - 1;
+
+      const currentStage = stages[stageIndex];
+      $('transformation-stage-badge').textContent = `STAGE ${stageIndex + 1}: ${currentStage.stage}`;
+      $('avatar-emoji').textContent = currentStage.emoji;
+      $('avatar-sub-visual').textContent = currentStage.sub;
+
+      const container = $('avatar-container');
+      container.classList.remove('bounce-react', 'shake-react');
+      void container.offsetWidth;
+
+      if (isCorrectAnswer === true) {
+        container.classList.add('bounce-react');
+        $('hero-dialogue').textContent = `"Awesome! Correct answer! Power loading up! 🔥"`;
+      } else if (isCorrectAnswer === false) {
+        container.classList.add('shake-react');
+        $('hero-dialogue').textContent = `"Oops! Wrong answer! Cute-ah alugugiren... 😭 Try next!"`;
+      } else {
+        $('hero-dialogue').textContent = currentStage.text;
+      }
+
+      const percent = (correctCount / totalQ) * 100;
+      $('level-meter').style.width = `${percent}%`;
+      $('meter-count-text').textContent = `${correctCount} / ${totalQ}`;
+    }
+
+    function startCountdown() {
+      showScreen('countdown-screen');
+      const config = LEVEL_CONFIGS[currentLevelIndex];
+      $('countdown-title').textContent = `Get Ready for Level ${config.level} (${config.count} Questions)!`;
+      let n = 3;
+      $('countdown-number').textContent = n;
+      const timer = setInterval(() => {
+        n--;
+        if (n > 0) {
+          const el = $('countdown-number');
+          el.classList.remove('countdown-number'); void el.offsetWidth;
+          el.textContent = n; el.classList.add('countdown-number');
+        } else {
+          clearInterval(timer);
+          startLevel();
+        }
+      }, 850);
+    }
+
+    function startLevel() {
+      const config = LEVEL_CONFIGS[currentLevelIndex];
+      const bank = QUESTION_BANKS[profile.major] || QUESTION_BANKS.commerce;
+      
+      // Pull required number of questions (duplicate bank if needed for Level 3/4)
+      let expandedBank = [...bank];
+      while (expandedBank.length < config.count) {
+        expandedBank = expandedBank.concat(bank);
+      }
+
+      questions = shuffle(expandedBank).slice(0, config.count).map(item => {
+        const order = shuffle(item.a.map((text, index) => ({text, isCorrect: index === item.correct})));
+        return {...item, a: order.map(o => o.text), correct: order.findIndex(o => o.isCorrect)};
+      });
+
+      questionIndex = 0; correctCount = 0; streak = 0;
+      $('welcome-title').textContent = `Let's go, ${profile.fullName.split(' ')[0]}!`;
+      $('current-level-tag').textContent = config.name;
+      $('level-label').textContent = `Level ${config.level}`;
+      $('level-description').textContent = `${config.count} Questions · Score 70%+ to unlock next level`;
+
+      showScreen('game-screen');
+      updateCharacterAvatar();
+      renderQuestion();
+    }
+
+    function renderQuestion() {
+      answered = false;
+      const config = LEVEL_CONFIGS[currentLevelIndex];
+      const q = questions[questionIndex];
+      $('category-chip').textContent = q.cat.toUpperCase();
+      $('question-text').textContent = q.q;
+      $('question-count').textContent = `Question ${questionIndex + 1} of ${config.count}`;
+
+      const percent = Math.round((questionIndex / config.count) * 100);
+      $('progress-fill').style.width = `${percent}%`;
+      $('progress-percent').textContent = `${percent}%`;
+
+      $('feedback').className = 'mt-4 hidden rounded-xl p-4 text-sm leading-6';
+      $('feedback').textContent = '';
+      $('next-btn').disabled = true;
+      $('next-btn').textContent = questionIndex === config.count - 1 ? 'See Level Result →' : 'Next Question →';
+
+      const choices = $('choices'); choices.replaceChildren();
+      q.a.forEach((answerText, i) => {
+        const btn = document.createElement('button');
+        btn.type = 'button'; btn.className = 'choice'; btn.textContent = `${String.fromCharCode(65+i)}. ${answerText}`;
+        btn.addEventListener('click', () => chooseAnswer(i));
+        choices.appendChild(btn);
+      });
+
+      $('xp-value').textContent = xp;
+      $('streak-value').textContent = `${streak} 🔥`;
+    }
+
+    function chooseAnswer(selectedIndex) {
+      if (answered) return;
+      answered = true;
+      const q = questions[questionIndex];
+      const buttons = [...$('choices').children];
+
+      buttons.forEach((btn, i) => {
+        btn.disabled = true;
+        if (i === q.correct) btn.classList.add('correct');
+        else if (i === selectedIndex) btn.classList.add('wrong');
+      });
+
+      const feedback = $('feedback'); feedback.classList.remove('hidden');
+
+      if (selectedIndex === q.correct) {
+        correctCount++; xp += 10; streak++;
+        playSound('correct');
+        feedback.className = 'mt-4 rounded-xl border border-emerald-400/30 bg-emerald-400/10 p-4 text-sm leading-6 text-emerald-200';
+        feedback.textContent = `Correct! +10 XP. ${q.why}`;
+        updateCharacterAvatar(true);
+      } else {
+        streak = 0;
+        playSound('wrong');
+        feedback.className = 'mt-4 rounded-xl border border-rose-400/30 bg-rose-400/10 p-4 text-sm leading-6 text-rose-200';
+        feedback.textContent = `Incorrect! Correct answer: ${q.a[q.correct]}. ${q.why}`;
+        updateCharacterAvatar(false);
+      }
+
+      $('next-btn').disabled = false;
+      $('xp-value').textContent = xp;
+      $('streak-value').textContent = `${streak} 🔥`;
+    }
+
+    function finishLevel() {
+      const config = LEVEL_CONFIGS[currentLevelIndex];
+      const scorePercent = Math.round((correctCount / config.count) * 100);
+      $('result-score').textContent = `${scorePercent}%`;
+      $('result-correct').textContent = `${correctCount}/${config.count}`;
+      $('result-xp').textContent = xp;
+
+      const dialogueCard = $('final-dialogue-text');
+      const passed = scorePercent >= 70;
+
+      if (passed) {
+        playSound('burst');
+        try { confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } }); } catch(e){}
+        $('result-emoji').textContent = '💥 LEVEL PASSED!';
+        $('result-title').textContent = `Level ${config.level} Cleared Successfully!`;
+        dialogueCard.textContent = `"Superb work! You scored ${scorePercent}% and unlocked the next epic stage!" 🎉🔥`;
+        
+        if (currentLevelIndex < LEVEL_CONFIGS.length - 1) {
+          $('result-status').textContent = 'NEXT LEVEL UNLOCKED!';
+          $('result-status').className = 'mt-1 text-sm font-black text-emerald-400';
+          $('continue-btn').textContent = `Start Level ${LEVEL_CONFIGS[currentLevelIndex + 1].level} →`;
+          $('continue-btn').style.display = 'inline-block';
+        } else {
+          $('result-status').textContent = 'ALL LEVELS COMPLETED!';
+          $('result-status').className = 'mt-1 text-sm font-black text-purple-400';
+          $('continue-btn').style.display = 'none';
+        }
+      } else {
+        $('result-emoji').textContent = '💪';
+        $('result-title').textContent = `Level ${config.level} - Try Again!`;
+        dialogueCard.textContent = `"You need at least 70% to unlock the next level. Don't worry, try one more time and don't give up!" ⚡`;
+        $('result-status').textContent = 'LOCKED (Need 70%)';
+        $('result-status').className = 'mt-1 text-sm font-black text-rose-400';
+        $('continue-btn').style.display = 'none';
+      }
+
+      showScreen('result-screen');
+    }
+
+    // EVENT LISTENERS
+    $('lead-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      profile = {
+        fullName: $('fullName').value.trim(),
+        email: $('email').value.trim(),
+        mobile: $('mobile').value.trim(),
+        major: $('major').value
+      };
+      currentLevelIndex = 0;
+      startCountdown();
+    });
+
+    $('next-btn').addEventListener('click', () => {
+      if (!answered) return;
+      const config = LEVEL_CONFIGS[currentLevelIndex];
+      if (questionIndex < config.count - 1) {
+        questionIndex++;
+        renderQuestion();
+      } else {
+        finishLevel();
+      }
+    });
+
+    $('continue-btn').addEventListener('click', () => {
+      const scorePercent = Math.round((correctCount / LEVEL_CONFIGS[currentLevelIndex].count) * 100);
+      if (scorePercent >= 70 && currentLevelIndex < LEVEL_CONFIGS.length - 1) {
+        currentLevelIndex++;
+        startCountdown();
+      }
+    });
+
+    $('restart-btn').addEventListener('click', () => {
+      startCountdown();
+    });
+
+    $('quit-btn').addEventListener('click', () => {
+      if (confirm('Return to profile setup?')) showScreen('lead-screen');
+    });
+  </script>
+</body>
+</html>
